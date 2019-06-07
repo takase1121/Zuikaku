@@ -1,5 +1,4 @@
-const Fetch = require('node-fetch');
-const Abort = require('abort-controller');
+const centra = require('centra');
 
 class Zuikaku {
     constructor(token) {
@@ -53,18 +52,18 @@ class Zuikaku {
         const url = new URL(this.baseurl + endpoint);
         options.k = this.token;
         url.search = new URLSearchParams(options);
-        const controller = new Abort();
-        const timeout = setTimeout(() => controller.abort(), 15000);
-        return Fetch(url.toString(), { signal: controller.signal })
-            .then((response) => {
-                clearTimeout(timeout);
-                if (response.status !== 200)
-                    throw new Error(`Zuikaku_Error: Code ${response.status}`);
-                return response.json();
-            }, (error) => {
-                clearTimeout(timeout);
-                error.name === 'AbortError' ? error = new Error('Zuikaku_Error: Request Timed Out') : error = new Error(`Zuikaku_Error: ${error}`);
-                throw error;
+        return centra(url.toString())
+            .query(options)
+            .timeout(2000)
+            .send()
+            .then(response => {
+                if (response.statusCode !== 200)
+                    throw new Error(`Zuikaku_Error: Code ${response.statusCode}`);
+                return JSON.stringify(response.body.toString());
+            })
+            .catch(error => {
+                const err = error.message.startsWith('connect ETIMEDOUT') ? new Error('Zuikaku_Error: Request Timed Out') : new Error(`Zuikaku_Error: ${error}`);
+                throw err;
             });
     }
 }
