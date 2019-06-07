@@ -54,7 +54,7 @@ class Zuikaku {
         url.search = new URLSearchParams(options);
         return centra(url.toString())
             .query(options)
-            .timeout(2000)
+            .timeout(15000)
             .send()
             .then(response => {
                 if (response.statusCode !== 200)
